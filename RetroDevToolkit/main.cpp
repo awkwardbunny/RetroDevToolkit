@@ -4,7 +4,6 @@
 #include <spdlog/spdlog.h>
 
 #include <machine/apple_iie.hpp>
-#include <common/ram.hpp>
 
 int main(int argc, char *argv[])
 {

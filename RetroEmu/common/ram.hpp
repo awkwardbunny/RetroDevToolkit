@@ -41,7 +41,7 @@ public:
     RAM() {
         memmap = std::vector<std::tuple<A, std::size_t, D *, bool>>();
     }
-    // ~RAM();
+    // ~RAM(); // TODO
 
     D read(A addr) {
         auto iter = std::find_if(memmap.rbegin(), memmap.rend(), [&addr](const memmapEntry &x) {
