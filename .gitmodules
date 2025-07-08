@@ -1,0 +1,3 @@
+[submodule "goodasm"]
+	path = ext/goodasm
+	url = https://github.com/travisgoodspeed/goodasm

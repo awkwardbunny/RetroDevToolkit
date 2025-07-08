@@ -1,0 +1,27 @@
+#ifndef APPLE_IIE_H
+#define APPLE_IIE_H
+
+#include <6502.hpp>
+#include <QStringList>
+
+class AppleIIe {
+public:
+    AppleIIe();
+    ~AppleIIe();
+    void step();
+    void run();
+    void print();
+
+    MOS6502 *getCpu();
+    uint8_t *ram;
+
+private:
+    MOS6502 *cpu;
+    uint32_t clk_khz;
+    bool running;
+
+    uint8_t read_mem(uint16_t);
+    void write_mem(uint16_t, uint8_t);
+};
+
+#endif
