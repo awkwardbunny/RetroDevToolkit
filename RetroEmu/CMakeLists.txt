@@ -1,6 +1,7 @@
 add_library(RetroEmu
 	common/cpu.cpp
 	common/cpu.hpp
+	common/ram.hpp
 	common/machine.cpp
 	common/machine.hpp
 	cpu/6502.cpp

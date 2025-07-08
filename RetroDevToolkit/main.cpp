@@ -4,19 +4,20 @@
 #include <spdlog/spdlog.h>
 
 #include <machine/apple_iie.hpp>
+#include <common/ram.hpp>
 
 int main(int argc, char *argv[])
 {
-    spdlog::set_level(spdlog::level::info);
+    spdlog::set_level(spdlog::level::debug);
 
     AppleIIe *machine = new AppleIIe();
 
     machine->print();
     // machine->run();
-    for(int i = 0; i < 1000; i++) {
-        machine->step();
-        machine->print();
-    }
+    // for(int i = 0; i < 1; i++) {
+    //     machine->step();
+    //     machine->print();
+    // }
 
     delete machine;
 

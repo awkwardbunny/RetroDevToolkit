@@ -1,6 +1,7 @@
 #ifndef APPLE_IIE_H
 #define APPLE_IIE_H
 
+#include <common/ram.hpp>
 #include <cpu/6502.hpp>
 #include <QStringList>
 
@@ -14,6 +15,8 @@ public:
 
     MOS6502 *getCpu();
     uint8_t *ram;
+
+    RAM<uint16_t, uint8_t> *mem;
 
 private:
     MOS6502 *cpu;

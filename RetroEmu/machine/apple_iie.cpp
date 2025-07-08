@@ -14,6 +14,11 @@
 AppleIIe::AppleIIe() {
     // spdlog::debug("AppleIIe::AppleIIe()");
 
+
+    mem = new RAM<uint16_t, uint8_t>();
+    mem->mapMem(0, 0xF800, true);
+    mem->mapFil(0xF800, 0, "/home/brian/RetroDevToolkit/rom/apple2e_F8.bin");
+
     this->ram = (uint8_t *)calloc(1, RAM_SIZE);
 
     this->cpu = new MOS6502(
