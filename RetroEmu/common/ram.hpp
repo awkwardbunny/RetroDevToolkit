@@ -11,20 +11,20 @@
 #include <sys/mman.h>
 #include <spdlog/spdlog.h>
 
-// #include <iostream>
-// template<class TupType, size_t... I>
-// void print(const TupType& _tup, std::index_sequence<I...>)
-// {
-//     std::cout << "(";
-//     (..., (std::cout << (I == 0? "" : ", ") << std::get<I>(_tup)));
-//     std::cout << ")\n";
-// }
+#include <iostream>
+template<class TupType, size_t... I>
+void print(const TupType& _tup, std::index_sequence<I...>)
+{
+    std::cout << "(";
+    (..., (std::cout << (I == 0? "" : ", ") << std::get<I>(_tup)));
+    std::cout << ")\n";
+}
 
-// template<class... T>
-// void print (const std::tuple<T...>& _tup)
-// {
-//     print(_tup, std::make_index_sequence<sizeof...(T)>());
-// }
+template<class... T>
+void print (const std::tuple<T...>& _tup)
+{
+    print(_tup, std::make_index_sequence<sizeof...(T)>());
+}
 
 template <typename A, typename D>
 class MmapEntry {
@@ -43,11 +43,17 @@ public:
     }
     // ~RAM(); // TODO
 
+    // For reading only
+    D operator[](A addr) {
+        return read(addr);
+    }
+
     D read(A addr) {
         auto iter = std::find_if(memmap.rbegin(), memmap.rend(), [&addr](const memmapEntry &x) {
             A addr_begin = std::get<0>(x);
-            A addr_end = addr_begin + std::get<1>(x);
-            return (addr_begin <= addr) && (addr < addr_end);
+            A addr_end = addr_begin + std::get<1>(x) - 1;
+            // spdlog::debug(std::format("{:04x}:{:04x}", addr_begin, addr_end));
+            return (addr_begin <= addr) && (addr <= addr_end);
         });
 
         if(iter == memmap.rend()) {
@@ -117,6 +123,14 @@ public:
 
         memmapEntry entry = memmapEntry(addr, n, buf, writable);
         memmap.push_back(entry);
+    }
+
+    void printMap() {
+        for(auto it = memmap.begin(); it != memmap.end(); it++) {
+            memmapEntry entry = *it;
+            print(entry);
+            // spdlog::debug(std::format("{}", entry));
+        }
     }
 
 private:

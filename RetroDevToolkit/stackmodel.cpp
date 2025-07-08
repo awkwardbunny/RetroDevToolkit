@@ -27,9 +27,9 @@ QVariant StackModel::data(const QModelIndex &index, int role) const
 
     if (role == Qt::DisplayRole) {
         if(index.column() == 1) return QString::fromStdString(std::format("{:04x}", 256+index.row()));
-        else if(index.column() == 0) return QString((mach->getCpu()->reg_SP == index.row()) ? ">" : "");
+        // else if(index.column() == 0) return QString((mach->getCpu()->regSP == index.row()) ? ">" : "");
         else {
-            return QString::fromStdString(std::format("{:02x}", mach->ram[256+index.row()]));
+            return QString::fromStdString(std::format("{:02x}", (*mach->mem)[256+index.row()]));
         }
     }
     return QVariant();

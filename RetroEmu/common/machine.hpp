@@ -3,7 +3,7 @@
 
 class REMACHINE {
 public:
-    REMACHINE();
+    // REMACHINE();
     virtual void step() = 0;
     virtual void reset() = 0;
 private:

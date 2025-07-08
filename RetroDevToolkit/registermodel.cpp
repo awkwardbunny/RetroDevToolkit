@@ -43,20 +43,20 @@ QVariant RegisterModel::data(const QModelIndex &index, int role) const
                 return QString("FLAGS");
             }
         } else {
-            switch(index.row()) {
-            case 0:
-                return QString::fromStdString(std::format("{:02x}", cpu->reg_A));
-            case 1:
-                return QString::fromStdString(std::format("{:02x}", cpu->reg_IX));
-            case 2:
-                return QString::fromStdString(std::format("{:02x}", cpu->reg_IY));
-            case 3:
-                return QString::fromStdString(std::format("{:04x}", cpu->reg_PC));
-            case 4:
-                return QString::fromStdString(std::format("1{:02x}", cpu->reg_SP));
-            case 5:
-                return QString::fromStdString(std::format("{:02x}", cpu->reg_FLAGS));
-            }
+            // switch(index.row()) {
+            // case 0:
+            //     return QString::fromStdString(std::format("{:02x}", cpu->reg_A));
+            // case 1:
+            //     return QString::fromStdString(std::format("{:02x}", cpu->reg_IX));
+            // case 2:
+            //     return QString::fromStdString(std::format("{:02x}", cpu->reg_IY));
+            // case 3:
+            //     return QString::fromStdString(std::format("{:04x}", cpu->reg_PC));
+            // case 4:
+            //     return QString::fromStdString(std::format("1{:02x}", cpu->reg_SP));
+            // case 5:
+            //     return QString::fromStdString(std::format("{:02x}", cpu->reg_FLAGS));
+            // }
 
             return QString("");
         }
@@ -78,33 +78,33 @@ bool RegisterModel::setData(const QModelIndex &index, const QVariant &value, int
     uint16_t z;
     if (data(index, role) != value) {
         // FIXME: Implement me!
-        switch(index.row()) {
-        case 0:
-            y = value.toString().toUInt(&status, 16);
-            cpu->reg_A= y;
-            break;
-        case 1:
-            y = value.toString().toUInt(&status, 16);
-            cpu->reg_IX= y;
-            break;
-        case 2:
-            y = value.toString().toUInt(&status, 16);
-            cpu->reg_IY= y;
-            break;
-        case 5:
-            y = value.toString().toUInt(&status, 16);
-            y &= 0xDF;
-            cpu->reg_FLAGS = y;
-            break;
-        case 3:
-            z = value.toString().toUInt(&status, 16);
-            cpu->reg_PC = z;
-            break;
-        case 4:
-            y = value.toString().toUInt(&status, 16);
-            cpu->reg_SP = y;
-            break;
-        }
+        // switch(index.row()) {
+        // case 0:
+        //     y = value.toString().toUInt(&status, 16);
+        //     cpu->reg_A= y;
+        //     break;
+        // case 1:
+        //     y = value.toString().toUInt(&status, 16);
+        //     cpu->reg_IX= y;
+        //     break;
+        // case 2:
+        //     y = value.toString().toUInt(&status, 16);
+        //     cpu->reg_IY= y;
+        //     break;
+        // case 5:
+        //     y = value.toString().toUInt(&status, 16);
+        //     y &= 0xDF;
+        //     cpu->reg_FLAGS = y;
+        //     break;
+        // case 3:
+        //     z = value.toString().toUInt(&status, 16);
+        //     cpu->reg_PC = z;
+        //     break;
+        // case 4:
+        //     y = value.toString().toUInt(&status, 16);
+        //     cpu->reg_SP = y;
+        //     break;
+        // }
 
         emit dataChanged(index, index, {role});
         return true;

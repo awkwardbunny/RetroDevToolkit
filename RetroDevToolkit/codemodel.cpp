@@ -14,7 +14,7 @@ void CodeModel::load() {
     // gas->listadr = 0;
     // gas->listbytes = 0;
     // std::cout << std::format("{} {} {} {}", mach->ram[0], mach->ram[1], mach->ram[0xf800], mach->ram[0xf801]);
-    gas->load(QByteArray::fromRawData((const char *)(mach->ram), 64*1024));
+    // gas->load(QByteArray::fromRawData((const char *)(mach->ram), 64*1024));
     update();
     // emit dataChanged(index(0, 0), index(64*1024, 1));
 }

@@ -3,8 +3,6 @@
 #include <format>
 #include <spdlog/spdlog.h>
 #include <cstdlib>
-#include <fstream>
-#include <iostream>
 
 #include <machine/apple_iie.hpp>
 
@@ -19,31 +17,14 @@ AppleIIe::AppleIIe() {
     mem->mapMem(0, 0xF800, true);
     mem->mapFil(0xF800, 0, "/home/brian/RetroDevToolkit/rom/apple2e_F8.bin");
 
-    this->ram = (uint8_t *)calloc(1, RAM_SIZE);
-
-    this->cpu = new MOS6502(
-        std::bind(&AppleIIe::write_mem, this, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&AppleIIe::read_mem, this, std::placeholders::_1)
-        );
+    this->cpu = new MOS6502(mem);
     this->clk_khz = CPU_FREQ_KHZ;
     this->running = false;
 
-    // for(int i = 0; i < 100; i++)
-    //     this->ram[i] = i;
-
-    std::ifstream file("rom.bin", std::ios::binary | std::ios::ate);
-    if(!file.is_open()) {
-        spdlog::error("Failed to open \"rom.bin\"");
-    } else {
-        std::streamsize size = file.tellg();
-        file.seekg(0, std::ios::beg);
-        file.read((char *)ram+0xF800, size);
-    }
 }
 
 AppleIIe::~AppleIIe() {
     // spdlog::debug("AppleIIe::~AppleIIe()");
-    free(this->ram);
     delete this->cpu;
 }
 
@@ -69,11 +50,11 @@ void AppleIIe::run() {
 
 void AppleIIe::write_mem(uint16_t addr, uint8_t data) {
     // spdlog::debug(std::format("AppleIIe::write_mem() - Callback: {:04x} {:02x}", addr, data));
-    this->ram[addr] = data;
+    mem->write(addr, data);
 }
 
 uint8_t AppleIIe::read_mem(uint16_t addr) {
-    uint8_t data = this->ram[addr];
+    uint8_t data = (*mem)[addr];
     // spdlog::debug(std::format("AppleIIe::read_mem() - Callback: {:04x} {:02x}", addr, data));
     return data;
 }

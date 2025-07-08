@@ -14,7 +14,6 @@ public:
     void print();
 
     MOS6502 *getCpu();
-    uint8_t *ram;
 
     RAM<uint16_t, uint8_t> *mem;
 

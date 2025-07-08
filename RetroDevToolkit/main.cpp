@@ -13,16 +13,16 @@ int main(int argc, char *argv[])
 
     machine->print();
     // machine->run();
-    // for(int i = 0; i < 1; i++) {
+    // for(int i = 0; i < 3; i++) {
     //     machine->step();
     //     machine->print();
     // }
 
-    delete machine;
+    // delete machine;
 
-    // QApplication a(argc, argv);
-    // WindowDisplay w;
-    // w.setMachine(machine);
-    // w.show();
-    // return a.exec();
+    QApplication a(argc, argv);
+    WindowDisplay w;
+    w.setMachine(machine);
+    w.show();
+    return a.exec();
 }
