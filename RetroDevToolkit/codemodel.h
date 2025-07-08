@@ -2,7 +2,7 @@
 #define CODEMODEL_H
 
 #include <QAbstractTableModel>
-#include <apple_iie.hpp>
+#include <machine/apple_iie.hpp>
 #include <goodasm.h>
 
 class CodeModel : public QAbstractTableModel

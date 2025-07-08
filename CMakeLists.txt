@@ -10,10 +10,8 @@ find_package(spdlog REQUIRED)
 qt_standard_project_setup()
 
 add_subdirectory(ext/goodasm)
-add_subdirectory(src/cpus)
-add_subdirectory(src/machines)
-add_subdirectory(src/app)
-add_subdirectory(src/retroemu)
+add_subdirectory(RetroDevToolkit)
+add_subdirectory(RetroEmu)
 
 # include(GNUInstallDirs)
 

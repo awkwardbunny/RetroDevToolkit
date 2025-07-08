@@ -1,15 +1,15 @@
-#ifndef STACKMODEL_H
-#define STACKMODEL_H
+#ifndef REGISTERMODEL_H
+#define REGISTERMODEL_H
 
 #include <QAbstractTableModel>
-#include <apple_iie.hpp>
+#include <cpu/6502.hpp>
 
-class StackModel : public QAbstractTableModel
+class RegisterModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
-    explicit StackModel(QObject *parent = nullptr);
+    explicit RegisterModel(QObject *parent = nullptr);
 
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -22,11 +22,11 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-    void setMachine(AppleIIe *);
+    void setCpu(MOS6502 *);
     void update();
 
 private:
-    AppleIIe *mach;
+    MOS6502 *cpu;
 };
 
-#endif // STACKMODEL_H
+#endif // REGISTERMODEL_H

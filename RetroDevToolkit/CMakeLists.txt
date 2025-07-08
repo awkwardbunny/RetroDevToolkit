@@ -1,18 +1,20 @@
 qt_add_executable(RetroDevToolkit
     WIN32 MACOSX_BUNDLE
     main.cpp
+
     windowdisplay.cpp
     windowdisplay.h
     windowdisplay.ui
-    registermodel.h registermodel.cpp
-    stackmodel.h stackmodel.cpp
-    codemodel.h codemodel.cpp
 
-
-
-
+    registermodel.cpp
+    registermodel.h
+    stackmodel.cpp
+    stackmodel.h
+    codemodel.cpp
+    codemodel.h
 )
 
+target_include_directories(RetroDevToolkit INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(RetroDevToolkit
     PRIVATE
         Qt::Core
@@ -21,6 +23,6 @@ target_link_libraries(RetroDevToolkit
 
 target_link_libraries(RetroDevToolkit
     PUBLIC
-    machines
+    RetroEmu
     spdlog::spdlog
 )

@@ -5,7 +5,7 @@
 #include "stackmodel.h"
 #include "registermodel.h"
 #include "codemodel.h"
-#include <apple_iie.hpp>
+#include <machine/apple_iie.hpp>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {

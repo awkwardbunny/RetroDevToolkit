@@ -13,7 +13,7 @@ enum AddrMode {
     IMP, ACC, IMM, ZERO, ZERX, ZERY, REL, ABS, ABSX, ABSY, IND, INDX, INDY, NONE
 };
 
-#include "6502.hpp"
+#include <cpu/6502.hpp>
 
 MOS6502::MOS6502(
         std::function<void(uint16_t,uint8_t)> r,

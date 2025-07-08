@@ -6,7 +6,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "apple_iie.hpp"
+#include <machine/apple_iie.hpp>
 
 #define CPU_FREQ_KHZ (1023)
 #define RAM_SIZE (64*1024)

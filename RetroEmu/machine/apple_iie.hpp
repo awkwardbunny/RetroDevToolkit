@@ -1,7 +1,7 @@
 #ifndef APPLE_IIE_H
 #define APPLE_IIE_H
 
-#include <6502.hpp>
+#include <cpu/6502.hpp>
 #include <QStringList>
 
 class AppleIIe {
