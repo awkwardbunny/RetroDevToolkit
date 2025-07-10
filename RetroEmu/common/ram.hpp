@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <spdlog/spdlog.h>
+#include <cstring>
 
 #include <iostream>
 template<class TupType, size_t... I>
@@ -33,13 +34,14 @@ public:
     std::size_t size;
     D *buf;
     bool writable;
+    const char *id;
 };
 
 template <typename A, typename D>
 class RAM {
 public:
     RAM() {
-        memmap = std::vector<std::tuple<A, std::size_t, D *, bool>>();
+        memmap = std::vector<memmapEntry>();
     }
     // ~RAM(); // TODO
 
@@ -107,19 +109,19 @@ public:
     }
 
     // TODO: Check for past end of addressable memory
-    void mapMem(A addr, std::size_t n, bool writable = false) {
+    void mapMem(const char *id, A addr, std::size_t n, bool writable = false) {
         D *buf = (D *)calloc(n, sizeof(D));
-        memmapEntry entry = memmapEntry(addr, n, buf, writable);
+        memmapEntry entry = memmapEntry(addr, n, buf, writable, id);
         memmap.push_back(entry);
     }
 
-    void mapBuf(A addr, std::size_t n, D *buf, bool writable = false) {
-        memmapEntry entry = memmapEntry(addr, n, buf, writable);
+    void mapBuf(const char *id, A addr, std::size_t n, D *buf, bool writable = false) {
+        memmapEntry entry = memmapEntry(addr, n, buf, writable, id);
         memmap.push_back(entry);
     }
 
     // Parameter n is ignored on read-only mapping (uses size of file).
-    void mapFil(A addr, std::size_t n, const char *filepath, bool writable = false) {
+    void mapFil(const char *id, A addr, std::size_t n, const char *filepath, bool writable = false) {
         D *buf;
 
         if(writable) {
@@ -140,20 +142,45 @@ public:
             }
         }
 
-        memmapEntry entry = memmapEntry(addr, n, buf, writable);
+        memmapEntry entry = memmapEntry(addr, n, buf, writable, id);
         memmap.push_back(entry);
+    }
+
+    void unmap(const char *id) {
+        auto iter = std::find_if(memmap.rbegin(), memmap.rend(), [&id](const memmapEntry &x) {
+            const char *idf = std::get<4>(x);
+            return !strncmp(id, idf, 16);
+        });
+
+        if(iter == memmap.rend()) {
+            spdlog::warn(std::format("Could not find mapping with ID: {}", id));
+            return;
+        }
+
+            A addr = std::get<0>(*iter);
+            std::size_t s = std::get<1>(*iter);
+            bool wr = std::get<3>(*iter);
+            const char *idx = std::get<4>(*iter);
+
+            spdlog::debug("E: {:04x} {:04x}: {} ({})", addr, s, wr ? "RW" : "RO", idx);
+        memmap.erase(--(iter.base()));
     }
 
     void printMap() {
         for(auto it = memmap.begin(); it != memmap.end(); it++) {
+            A addr = std::get<0>(*it);
+            std::size_t s = std::get<1>(*it);
+            bool wr = std::get<3>(*it);
+            const char *id = std::get<4>(*it);
+
+            // spdlog::debug("{:04x} {:04x}: {} ({})", addr, s, wr ? "RW" : "RO", id);
             memmapEntry entry = *it;
-            print(entry);
             // spdlog::debug(std::format("{}", entry));
         }
     }
 
 private:
-    typedef std::tuple<A, std::size_t, D *, bool> memmapEntry;
+    typedef std::tuple<A, std::size_t, D *, bool, const char *> memmapEntry;
     std::vector<memmapEntry> memmap;
 };
 

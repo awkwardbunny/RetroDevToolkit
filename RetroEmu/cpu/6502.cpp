@@ -100,14 +100,11 @@ uint16_t MOS6502::pullPC16() {
 }
 
 void MOS6502::step() {
-    spdlog::debug("MOS6502::step()");
+    // spdlog::debug("MOS6502::step()");
 
     if(!init) {
-        spdlog::debug("Init");
         init = true;
         *((*regs)["PC"]) = ((*mem)[0xFFFD] << 8) + (*mem)[0xFFFC];
-
-        print();
         return;
     }
 

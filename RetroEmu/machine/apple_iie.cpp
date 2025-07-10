@@ -13,8 +13,9 @@ AppleIIe::AppleIIe() {
 
 
     mem = new RAM<uint16_t, uint8_t>();
-    mem->mapMem(0, 0xF800, true);
-    mem->mapFil(0xF800, 0, "/home/brian/RetroDevToolkit/rom/apple2e_F8.bin");
+    mem->mapMem("", 0, 0xF800, true);
+    mem->mapFil("monitor", 0xF800, 0, "/home/brian/RetroDevToolkit/rom/apple2e_F8.bin");
+    mem->printMap();
 
     this->cpu = new MOS6502(mem);
     this->clk_khz = CPU_FREQ_KHZ;
@@ -37,6 +38,14 @@ void AppleIIe::reset() {
 void AppleIIe::step() {
     // spdlog::debug("AppleIIe::step()");
     cpu->step();
+}
+
+void AppleIIe::unload() {
+    mem->unmap("test");
+}
+
+void AppleIIe::load(const char *path, uint16_t addr) {
+    mem->mapFil("test", addr, 0x100, path, true);
 }
 
 // void AppleIIe::write_mem(uint16_t addr, uint8_t data) {

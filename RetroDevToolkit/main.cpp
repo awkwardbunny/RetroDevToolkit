@@ -47,6 +47,13 @@ void CPUWindow(AppState *state) {
     ImGui::SameLine();
     if(ImGui::Button("RUN")) {
         state->running = !state->running;
+
+        AppleIIe *m = (AppleIIe *)(state->mach);
+        if(state->running) {
+            m->load("/tmp/0", 0);
+        } else {
+            m->unload();
+        }
         // state->mach->step();
     }
     ImGui::SameLine();
@@ -178,7 +185,12 @@ void MemoryWindow(AppState *state) {
             for(int j = 0; j < 16; j++) {
                 ImGui::TableSetColumnIndex(j+1);
                 AppleIIe *m = (AppleIIe *)(state->mach);
-                ImGui::Text("%02x", (*(m->mem))[i+j]);
+                ImGui::PushID(i+j);
+                // ImGui::Text("%02x", (*(m->mem))[i+j]);
+                ImGui::PushItemWidth(22);
+                ImGui::InputScalar("##mem", ImGuiDataType_U8, (int *)m->mem->ptr(i+j), NULL, NULL, "%02X", ImGuiInputTextFlags_CharsUppercase );
+                ImGui::PopItemWidth();
+                ImGui::PopID();
             }
             // ImGui::PushID(addr);
             // int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_CharsHexadecimal;
@@ -212,7 +224,7 @@ void StackWindow(AppState *state) {
             ImGui::PushID(addr);
             int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_CharsHexadecimal;
             AppleIIe *m = (AppleIIe *)(state->mach);
-            ImGui::PushItemWidth(30);
+            ImGui::PushItemWidth(22);
             // ImGui::InputInt("##stack", (int *)m->mem->ptr(addr),0, 0, flags);
             ImGui::InputScalar("##stack", ImGuiDataType_U8, (int *)m->mem->ptr(addr), NULL, NULL, "%02x", ImGuiInputTextFlags_CharsUppercase );
             ImGui::PopItemWidth();
@@ -368,7 +380,6 @@ int main(int argc, char *argv[])
     spdlog::set_level(spdlog::level::debug);
 
     AppState *state = new AppState();
-
 
     return startGui(state);
 

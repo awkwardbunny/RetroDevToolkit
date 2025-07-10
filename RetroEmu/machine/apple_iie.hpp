@@ -19,6 +19,9 @@ public:
     Registers *getRegs();
     RAM<uint16_t, uint8_t> *mem;
 
+    void load(const char *path, uint16_t addr);
+    void unload();
+
 private:
     MOS6502 *cpu;
 
