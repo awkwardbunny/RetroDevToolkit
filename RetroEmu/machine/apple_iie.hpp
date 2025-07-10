@@ -2,28 +2,28 @@
 #define APPLE_IIE_H
 
 #include <common/ram.hpp>
+#include <common/machine.hpp>
 #include <cpu/6502.hpp>
-#include <QStringList>
 
-class AppleIIe {
+class AppleIIe : public REMachine {
 public:
+    uint32_t clk_khz;
+
     AppleIIe();
     ~AppleIIe();
+
+    void reset();
     void step();
-    void run();
     void print();
 
-    MOS6502 *getCpu();
-
+    Registers *getRegs();
     RAM<uint16_t, uint8_t> *mem;
 
 private:
     MOS6502 *cpu;
-    uint32_t clk_khz;
-    bool running;
 
-    uint8_t read_mem(uint16_t);
-    void write_mem(uint16_t, uint8_t);
+    // uint8_t read_mem(uint16_t);
+    // void write_mem(uint16_t, uint8_t);
 };
 
 #endif

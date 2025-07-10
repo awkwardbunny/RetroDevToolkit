@@ -48,6 +48,24 @@ public:
         return read(addr);
     }
 
+    D *ptr(A addr) {
+        auto iter = std::find_if(memmap.rbegin(), memmap.rend(), [&addr](const memmapEntry &x) {
+            A addr_begin = std::get<0>(x);
+            A addr_end = addr_begin + std::get<1>(x) - 1;
+            // spdlog::debug(std::format("{:04x}:{:04x}", addr_begin, addr_end));
+            return (addr_begin <= addr) && (addr <= addr_end);
+        });
+
+        if(iter == memmap.rend()) {
+            spdlog::warn(std::format("Reading from unmapped address 0x{:x}", addr));
+            return 0;
+        }
+
+        memmapEntry region = *iter;
+        A offset = addr - std::get<0>(region);
+        return std::get<2>(region) + offset;
+    }
+
     D read(A addr) {
         auto iter = std::find_if(memmap.rbegin(), memmap.rend(), [&addr](const memmapEntry &x) {
             A addr_begin = std::get<0>(x);
@@ -66,6 +84,7 @@ public:
         return std::get<2>(region)[offset];
     }
     void write(A addr, D data) {
+        // spdlog::debug("Writing {:02x} to {:04x}", data, addr);
         auto iter = std::find_if(memmap.rbegin(), memmap.rend(), [&addr](const memmapEntry &x) {
             A addr_begin = std::get<0>(x);
             A addr_end = addr_begin + std::get<1>(x);

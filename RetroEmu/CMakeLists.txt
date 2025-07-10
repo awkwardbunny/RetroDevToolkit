@@ -1,10 +1,9 @@
 add_library(RetroEmu
-	common/cpu.cpp
 	common/cpu.hpp
-	common/ram.hpp
-	common/register.hpp
-	common/machine.cpp
 	common/machine.hpp
+	common/ram.hpp
+	common/registers.cpp
+	common/registers.hpp
 	cpu/6502.cpp
 	cpu/6502.hpp
 	machine/apple_iie.cpp

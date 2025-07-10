@@ -1,91 +1,92 @@
 #include <spdlog/spdlog.h>
 
-// enum OpType {
-//     ADC, AND, ASL, BCC, BCS, BEQ, BIT, BMI, BNE, BPL, BRK, BVC, BVS, CLC,
-//     CLD, CLI, CLV, CMP, CPX, CPY, DEC, DEX, DEY, EOR, INC, INX, INY, JMP,
-//     JSR, LDA, LDX, LDY, LSR, NOP, ORA, PHA, PHP, PLA, PLP, ROL, ROR, RTI,
-//     RTS, SBC, SEC, SED, SEI, STA, STX, STY, TAX, TAY, TSX, TXA, TXS, TYA,
-//     ILL
-// };
-
-// enum AddrMode {
-//     IMP, ACC, IMM, ZERO, ZERX, ZERY, REL, ABS, ABSX, ABSY, IND, INDX, INDY, NONE
-// };
-
 #include <cpu/6502.hpp>
+
+#define MEM (*mem)
+#define REG_PC (*(*regs)["PC"])
+#define REG_SP (*(*regs)["SP"])
+#define REG_FLAGS (*(*regs)["FLAGS"])
+#define REG_A (*(*regs)["A"])
+#define REG_X (*(*regs)["X"])
+#define REG_Y (*(*regs)["Y"])
+
+#define IS_CARRY()   (*REG_FLAGS & 0x01)
+#define IS_ZERO()    (*REG_FLAGS & 0x02)
+#define IS_INT_DIS() (*REG_FLAGS & 0x04)
+#define IS_DECIMAL() (*REG_FLAGS & 0x08)
+#define IS_BREAK()   (*REG_FLAGS & 0x10)
+#define IS_OVERFL()  (*REG_FLAGS & 0x40)
+#define IS_NEG()     (*REG_FLAGS & 0x80)
+
+#define SET_CARRY()   (REG_FLAGS = *REG_FLAGS | 0x01)
+#define SET_ZERO()    (REG_FLAGS = *REG_FLAGS | 0x02)
+#define SET_INT_DIS() (REG_FLAGS = *REG_FLAGS | 0x04)
+#define SET_DECIMAL() (REG_FLAGS = *REG_FLAGS | 0x08)
+#define SET_BREAK()   (REG_FLAGS = *REG_FLAGS | 0x10)
+#define SET_OVERFL()  (REG_FLAGS = *REG_FLAGS | 0x40)
+#define SET_NEG()     (REG_FLAGS = *REG_FLAGS | 0x80)
+
+#define CLR_CARRY()   (REG_FLAGS = *REG_FLAGS & ~0x01)
+#define CLR_ZERO()    (REG_FLAGS = *REG_FLAGS & ~0x02)
+#define CLR_INT_DIS() (REG_FLAGS = *REG_FLAGS & ~0x04)
+#define CLR_DECIMAL() (REG_FLAGS = *REG_FLAGS & ~0x08)
+#define CLR_BREAK()   (REG_FLAGS = *REG_FLAGS & ~0x10)
+#define CLR_OVERFL()  (REG_FLAGS = *REG_FLAGS & ~0x40)
+#define CLR_NEG()     (REG_FLAGS = *REG_FLAGS & ~0x80)
 
 #define IMM data
 #define IMP data
-#define ACC REG_A
+#define ACC *REG_A
 #define ZERO MEM[data]
-#define ZERX MEM[(data+REG_X) & 0xFF]
-#define ZERY MEM[(data+REG_Y) & 0xFF]
+#define ZERX MEM[(data+*REG_X) & 0xFF]
+#define ZERY MEM[(data+*REG_Y) & 0xFF]
 #define REL data
 #define ABS ZERO
-#define ABSX MEM[data+REG_X]
-#define ABSY MEM[data+REG_Y]
+#define ABSX MEM[data+*REG_X]
+#define ABSY MEM[data+*REG_Y]
 #define IND MEM[ZERO]
 #define INDX MEM[ZERX]
-#define INDY MEM[ZERO + REG_Y]
+#define INDY MEM[ZERO + *REG_Y]
 
-MOS6502::MOS6502(RAM<uint16_t, uint8_t> *mem) {
-    this->mem = mem;
+MOS6502::MOS6502(RAM<uint16_t, uint8_t> *mem) : mem(mem), init(false) {
 
-    uint16_t resetAddr = ((*mem)[0xFFFD] << 8) + (*mem)[0xFFFC];
-    regPC = new Register<uint16_t>(resetAddr);
-    regSP = new Register<uint16_t>(0, 0x0100, 0xFE00);
-    regFLAGS = new Register<uint8_t>(0x04, 0, 0x20);
-    regA = new Register<uint8_t>();
-    regX = new Register<uint8_t>();
-    regY = new Register<uint8_t>();
-
-    gas = new GoodASM("6502");
-    gas->setListing("nasm");
+    // gas = new GoodASM("6502");
+    // gas->setListing("nasm");
+    regs = new Registers();
+    regs->add("PC", new Register(16));
+    regs->add("SP", new Register(9, 0, Register::HEX, 0x0100));
+    regs->add("FLAGS", new Register(8, 0x04, Register::BIN, 0, 0x20, "CZIDB-VN"));
+    regs->add("A", new Register(8));
+    regs->add("X", new Register(8));
+    regs->add("Y", new Register(8));
 }
 
 void MOS6502::reset() {
-    regPC->reset();
-    regSP->reset();
-    regA->reset();
-    regX->reset();
-    regY->reset();
-    regFLAGS->reset();
+    init = false;
+    regs->reset();
+}
+
+Registers *MOS6502::getRegs() {
+    return regs;
 }
 
 MOS6502::~MOS6502() {
     // spdlog::debug("MOS6502::~MOS6502()");
-    delete regPC;
-    delete regSP;
-    delete regFLAGS;
-    delete regA;
-    delete regX;
-    delete regY;
 }
 
 void MOS6502::print() {
-    spdlog::debug(
-        std::format("MOS6502::print()\nPC: {:04x}\nSP: {:04x} A: {:02x}\nIX:   {:02x} IY:   {:02x}\nFLAGS: {:02x}",
-                    REG_PC,
-                    REG_SP, REG_A,
-                    REG_X,  REG_Y,
-                    REG_FLAGS
-                    )
-        );
+    regs->print();
 }
 
 void MOS6502::push(uint8_t data) {
     mem->write(REG_SP--, data);
-    spdlog::debug(std::format("{:04x}", REG_SP));
-    regSP->fix();
-    spdlog::debug(std::format("{:04x}", REG_SP));
+    // spdlog::debug(std::format("{:04x}", *REG_SP));
 }
 
 uint8_t MOS6502::pop() {
     REG_SP++;
-    spdlog::debug(std::format("{:04x}", REG_SP));
-    regSP->fix();
-    spdlog::debug(std::format("{:04x}", REG_SP));
-    return MEM[REG_SP];
+    // spdlog::debug(std::format("{:04x}", *REG_SP));
+    return MEM[*REG_SP];
 }
 
 uint8_t MOS6502::pullPC8() {
@@ -101,7 +102,16 @@ uint16_t MOS6502::pullPC16() {
 void MOS6502::step() {
     spdlog::debug("MOS6502::step()");
 
-    uint16_t origPC = REG_PC;
+    if(!init) {
+        spdlog::debug("Init");
+        init = true;
+        *((*regs)["PC"]) = ((*mem)[0xFFFD] << 8) + (*mem)[0xFFFC];
+
+        print();
+        return;
+    }
+
+    uint16_t origPC = *REG_PC;
 
     // Read first byte
     uint8_t opcode = pullPC8();
@@ -110,7 +120,7 @@ void MOS6502::step() {
     uint16_t data = 0;
 
     bool A7, B7, C7;
-    B7 = (REG_A & 0x80);
+    B7 = (*REG_A & 0x80);
 
     // FETCH / DECODE / EXECUTE
     switch(opcode) {
@@ -119,7 +129,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     adc:
-        result = REG_A + data + IS_CARRY();
+        result = *REG_A + data + IS_CARRY();
         REG_A = result;
     // TODO: Double-check carry and overflow
     set_overflow:
@@ -128,8 +138,8 @@ void MOS6502::step() {
         if((A7 == B7) && (A7 != C7)) SET_OVERFL(); else CLR_OVERFL();
     set_flags:
         if(result & 0x0100) SET_CARRY(); else CLR_CARRY();
-        if(REG_A & 0x80) SET_NEG(); else CLR_NEG();
-        if(REG_A) CLR_ZERO(); else SET_ZERO();
+        if(*REG_A & 0x80) SET_NEG(); else CLR_NEG();
+        if(*REG_A) CLR_ZERO(); else SET_ZERO();
         break;
     case 0x65:
         data = pullPC8();
@@ -165,7 +175,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     sbc:
-        result = (uint16_t)REG_A - (data + !IS_CARRY());
+        result = (uint16_t)*REG_A - (data + !IS_CARRY());
         REG_A = result;
         goto set_overflow; // I think overflow works a bit differently here
     case 0xE5:
@@ -202,7 +212,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     and_i:
-        REG_A &= data;
+        REG_A = *REG_A & data;
         goto set_flags;
     case 0x25:
         data = pullPC8();
@@ -238,7 +248,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     ora:
-        REG_A |= data;
+        REG_A = *REG_A | data;
         goto set_flags;
     case 0x05:
         data = pullPC8();
@@ -274,7 +284,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     eor:
-        REG_A ^= data;
+        REG_A = *REG_A ^ data;
         goto set_flags;
     case 0x45:
         data = pullPC8();
@@ -408,7 +418,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = REL;
     rel_branch:
-        REG_PC = (int16_t)REG_PC + (int8_t)data;
+        REG_PC = (int16_t)*REG_PC + (int8_t)data;
         break;
 
     // BCS
@@ -434,7 +444,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = ZERO;
     bit:
-        (REG_A & data) ? CLR_ZERO() : SET_ZERO();
+        (*REG_A & data) ? CLR_ZERO() : SET_ZERO();
         (data & 0x80) ? SET_NEG() : CLR_NEG();
         (data & 0x40) ? SET_OVERFL() : CLR_OVERFL();
         break;
@@ -458,9 +468,9 @@ void MOS6502::step() {
     // BRK
     case 0x00:
         data = IMP;
-        push(REG_PC >> 8);
-        push(REG_PC & 0xFF);
-        push(REG_FLAGS);
+        push(*REG_PC >> 8);
+        push(*REG_PC & 0xFF);
+        push(*REG_FLAGS);
         REG_PC = (MEM[0xFFFF] << 8) + MEM[0xFFFE];
         SET_BREAK();
         break;
@@ -524,7 +534,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     cmp:
-        result = REG_A - data;
+        result = *REG_A - data;
     set_result_flags:
         if(result & 0x80) SET_NEG(); else CLR_NEG();
         if(result & 0xFF) CLR_ZERO(); else SET_ZERO();
@@ -563,7 +573,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     cpx:
-        result = REG_X - data;
+        result = *REG_X - data;
         goto set_result_flags;
     case 0xE4:
         data = pullPC8();
@@ -579,7 +589,7 @@ void MOS6502::step() {
         data = pullPC8();
         data = IMM;
     cpy:
-        result = REG_Y - data;
+        result = *REG_Y - data;
         goto set_result_flags;
     case 0xC4:
         data = pullPC8();
@@ -599,7 +609,7 @@ void MOS6502::step() {
     case 0xD6:
         data = pullPC8();
         result = ZERX;
-        mem->write((data+REG_X) & 0xFF, result-1);
+        mem->write((data+*REG_X) & 0xFF, result-1);
         break;
     case 0xCE:
         data = pullPC16();
@@ -609,7 +619,7 @@ void MOS6502::step() {
     case 0xDE:
         data = pullPC16();
         data = ABSX;
-        mem->write(data+REG_X, result-1);
+        mem->write(data+*REG_X, result-1);
         break;
 
     // INC
@@ -621,7 +631,7 @@ void MOS6502::step() {
     case 0xF6:
         data = pullPC8();
         data = ZERX;
-        mem->write((data+REG_X) & 0xFF, result+1);
+        mem->write((data+*REG_X) & 0xFF, result+1);
         break;
     case 0xEE:
         data = pullPC16();
@@ -631,7 +641,7 @@ void MOS6502::step() {
     case 0xFE:
         data = pullPC16();
         data = ABSX;
-        mem->write(data+REG_X, result+1);
+        mem->write(data+*REG_X, result+1);
         break;
 
     // DEX
@@ -639,8 +649,8 @@ void MOS6502::step() {
         data = IMP;
         REG_X--;
     set_x_flags:
-        if(REG_X & 0x80) SET_NEG(); else CLR_NEG();
-        if(REG_X & 0xFF) CLR_ZERO(); else SET_ZERO();
+        if(*REG_X & 0x80) SET_NEG(); else CLR_NEG();
+        if(*REG_X & 0xFF) CLR_ZERO(); else SET_ZERO();
         break;
 
     // DEY
@@ -648,8 +658,8 @@ void MOS6502::step() {
         data = IMP;
         REG_Y--;
     set_y_flags:
-        if(REG_Y & 0x80) SET_NEG(); else CLR_NEG();
-        if(REG_Y & 0xFF) CLR_ZERO(); else SET_ZERO();
+        if(*REG_Y & 0x80) SET_NEG(); else CLR_NEG();
+        if(*REG_Y & 0xFF) CLR_ZERO(); else SET_ZERO();
         break;
 
     // INX
@@ -680,8 +690,8 @@ void MOS6502::step() {
     case 0x20:
         data = pullPC16();
         // data = ABS;
-        push((REG_PC-1) >> 8);
-        push((REG_PC-1) & 0xFF);
+        push((*REG_PC-1) >> 8);
+        push((*REG_PC-1) & 0xFF);
         goto jmp;
 
     // RTS
@@ -778,7 +788,7 @@ void MOS6502::step() {
     // PHA
     case 0x48:
         data = IMP;
-        push(REG_A);
+        push(*REG_A);
         break;
 
     // PLA
@@ -790,7 +800,7 @@ void MOS6502::step() {
     // PHP
     case 0x08:
         data = IMP;
-        push(REG_FLAGS);
+        push(*REG_FLAGS);
         break;
 
     // PLP
@@ -804,129 +814,118 @@ void MOS6502::step() {
         data = IMP;
         REG_FLAGS = pop();
         REG_PC = pop();
-        REG_PC += pop() << 8;
+        REG_PC = pop() << 8;
         break;
 
     // STA
     case 0x85:
         data = pullPC8();
         // data = ZERO;
-        mem->write(data, REG_A);
+        mem->write(data, *REG_A);
         break;
     case 0x95:
         data = pullPC8();
         // data = ZERX;
-        mem->write((data+REG_X) & 0xFF, REG_A);
+        mem->write((data+*REG_X) & 0xFF, *REG_A);
         break;
     case 0x8D:
         data = pullPC16();
         // data = ABS;
-        mem->write(data & 0xFF, REG_A);
+        mem->write(data & 0xFF, *REG_A);
         break;
     case 0x9D:
         data = pullPC16();
         // data = ABSX;
-        mem->write(data+REG_X & 0xFF, REG_A);
+        mem->write(data+*REG_X & 0xFF, *REG_A);
         break;
     case 0x99:
         data = pullPC16();
         // data = ABSY;
-        mem->write((data+REG_Y) & 0xFF, REG_A);
+        mem->write((data+*REG_Y) & 0xFF, *REG_A);
         break;
     case 0x81:
         data = pullPC8();
         // data = INDX;
-        mem->write(ZERX, REG_A);
+        mem->write(ZERX, *REG_A);
         break;
     case 0x91:
         data = pullPC8();
         // data = INDY;
-        mem->write(ZERO+REG_Y, REG_A);
+        mem->write(ZERO+*REG_Y, *REG_A);
         break;
 
     // STX
     case 0x86:
         data = pullPC8();
         // data = ZERO;
-        mem->write(data, REG_X);
+        mem->write(data, *REG_X);
         break;
     case 0x96:
         data = pullPC8();
         // data = ZERY;
-        mem->write((data+REG_Y) & 0xFF, REG_X);
+        mem->write((data+*REG_Y) & 0xFF, *REG_X);
         break;
     case 0x8E:
         data = pullPC16();
         // data = ABS;
-        mem->write(data, REG_X);
+        mem->write(data, *REG_X);
         break;
 
     // STY
     case 0x84:
         data = pullPC8();
         // data = ZERO;
-        mem->write(data, REG_Y);
+        mem->write(data, *REG_Y);
         break;
     case 0x94:
         data = pullPC8();
         // data = ZERY;
-        mem->write((data+REG_Y) & 0xFF, REG_Y);
+        mem->write((data+*REG_Y) & 0xFF, *REG_Y);
         break;
     case 0x8C:
         data = pullPC16();
         // data = ABS;
-        mem->write(data, REG_Y);
+        mem->write(data, *REG_Y);
         break;
 
     // TAX
     case 0xAA:
         data = IMP;
-        REG_X = REG_A;
+        REG_X = *REG_A;
         goto set_x_flags;
 
     // TAY
     case 0xA8:
         data = IMP;
-        REG_Y = REG_A;
+        REG_Y = *REG_A;
         goto set_y_flags;
 
     // TSX
     case 0xBA:
         data = IMP;
-        REG_X = REG_SP;
+        REG_X = *REG_SP;
         goto set_x_flags;
 
     // TXA
     case 0x8A:
         data = IMP;
-        REG_A = REG_X;
+        REG_A = *REG_X;
         goto set_flags;
 
     // TXS
     case 0x9A:
         data = IMP;
-        REG_SP = REG_X;
+        REG_SP = *REG_X;
         break;
 
     // TYA
     case 0x98:
         data = IMP;
-        REG_A = REG_Y;
+        REG_A = *REG_Y;
         goto set_flags;
 
     default:
         spdlog::error(std::format("Unknown opcode: {:02x} @ 0x{:04x}", opcode, origPC));
         break;
-
     }
-
-    QByteArray instr = QByteArray();
-    instr.append(opcode).append(MEM[origPC+1]).append(MEM[origPC+2]);
-    gas->load(instr);
-    gas->baseaddress = origPC;
-    // gas->listadr = 0;
-    // gas->listbytes = 0;
-    QList<GAInstruction> i = gas->instructions;
-    spdlog::info(std::format("{:04x}: {} {} {}", origPC, i[0].verb.toStdString(), i[0].params.toStdString(), i[0].source().toStdString()));
-
 }
