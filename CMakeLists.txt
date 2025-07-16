@@ -3,13 +3,14 @@ project(RetroDevToolkit LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+cmake_policy(SET CMP0135 NEW)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 find_package(spdlog REQUIRED)
 find_package(imgui REQUIRED)
+find_package(gtest REQUIRED)
 find_package(goodasm)
-
 qt_standard_project_setup(REQUIRES 6.5)
 
 add_subdirectory(RetroDevToolkit)

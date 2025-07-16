@@ -1,6 +1,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cpu/6502.hpp>
+#include <gtest/gtest.h>
 
 #define MEM (*mem)
 #define REG_PC (*(*regs)["PC"])
